@@ -4,30 +4,39 @@ import modelserver_pb2_grpc
 import csv
 import sys
 import threading
+import time
 
 # some of the codes are from Microsoft Bing Chat
 
 
 
 class WorkerThread(threading.Thread):
-    def __init__(self, filename, stub):
+    def __init__(self, filename, stub, lock):
         threading.Thread.__init__(self)
         self.filename = filename
         self.stub = stub
+        self.lock = lock
         self.hits = 0
         self.misses = 0
 
     def run(self):
         with open(self.filename, 'r') as f:
             reader = csv.reader(f)
+            #X=[]
             for row in reader:
+            #    for x in  row:
+             #       x=x.strip(' ')
+              #      x=x.strip('-')
+               #     X.append(float(x))
                 X=[float(x) for x in row]
+                
                 response = self.stub.Predict(modelserver_pb2.PredictRequest(X=X))
-                if response.hit:
-                    self.hits += 1
+                if response is not None and response.hit:
+                    with self.lock:
+                        self.hits += 1
                 else:
-                    self.misses += 1
-                    print(self.misses)
+                    with self.lock:
+                        self.misses += 1
 
 def main():
     if len(sys.argv) < 4:
@@ -43,21 +52,27 @@ def main():
 
     stub.SetCoefs(modelserver_pb2.SetCoefsRequest(coefs=coefs))
 
+    lock = threading.Lock()
+
     threads = []
     for filename in filenames:
-        thread = WorkerThread(filename, stub)
+        thread = WorkerThread(filename, stub, lock)
         thread.start()
         threads.append(thread)
 
-    total_hits = 0
-    total_misses = 0
     for thread in threads:
         thread.join()
-        total_hits += thread.hits
-        total_misses += thread.misses
+
+    total_hits = 0
+    total_misses = 0
+    with lock:
+        for thread in threads:
+            total_hits += thread.hits
+            total_misses += thread.misses
 
     hit_rate = total_hits / (total_hits + total_misses)
     print(hit_rate)
 
 if __name__ == '__main__':
     main()
+

@@ -17,7 +17,6 @@ class PredictionCache:
         with self.lock:
             self.coefs = coefs
             self.cache.clear()
-
     def Predict(self, X):
         X_rounded = torch.round(X * 10000) / 10000
         X_tuple = tuple(X_rounded.flatten().tolist())
