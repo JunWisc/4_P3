@@ -8,8 +8,6 @@ import time
 
 # some of the codes are from Microsoft Bing Chat
 
-
-
 class WorkerThread(threading.Thread):
     def __init__(self, filename, stub, lock):
         threading.Thread.__init__(self)
@@ -39,15 +37,12 @@ class WorkerThread(threading.Thread):
                         self.misses += 1
 
 def main():
-    if len(sys.argv) < 4:
-        print("Usage: python3 client.py <server_address> <port> <coefs> <filenames>")
-        return
 
-    server_address_port = 'localhost:5440'
+    port = 'localhost:5440'
     coefs = [1.0,2.0,3.0]
     filenames = ['workload/workload1.csv', 'workload/workload2.csv']
 
-    channel = grpc.insecure_channel(server_address_port)
+    channel = grpc.insecure_channel(port)
     stub = modelserver_pb2_grpc.ModelServerStub(channel)
 
     stub.SetCoefs(modelserver_pb2.SetCoefsRequest(coefs=coefs))

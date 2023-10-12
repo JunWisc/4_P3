@@ -6,6 +6,8 @@ import modelserver_pb2_grpc
 import grpc
 from concurrent import futures
 
+# some codes are from Microsoft Bing Chat
+
 class PredictionCache:
     def __init__(self):
         self.coefs = None
