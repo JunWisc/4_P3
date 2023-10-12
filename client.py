@@ -20,27 +20,25 @@ class WorkerThread(threading.Thread):
     def run(self):
         with open(self.filename, 'r') as f:
             reader = csv.reader(f)
-            #X=[]
             for row in reader:
-            #    for x in  row:
-             #       x=x.strip(' ')
-              #      x=x.strip('-')
-               #     X.append(float(x))
                 X=[float(x) for x in row]
-                
                 response = self.stub.Predict(modelserver_pb2.PredictRequest(X=X))
-                if response is not None and response.hit:
-                    with self.lock:
-                        self.hits += 1
-                else:
-                    with self.lock:
-                        self.misses += 1
+                if response is not None:
+                    if response.hit:
+                        with self.lock:
+                            self.hits += 1
+                    else:
+                        with self.lock:
+                            self.misses +=1
 
 def main():
 
-    port = 'localhost:5440'
-    coefs = [1.0,2.0,3.0]
-    filenames = ['workload/workload1.csv', 'workload/workload2.csv']
+    port="localhost:"+str(sys.argv[1])
+    coefs_prev=sys.argv[2].split(",")
+    coefs=[]
+    for coef in coefs_prev:
+        coefs.append(float(coef))
+    filenames = sys.argv[3:]
 
     channel = grpc.insecure_channel(port)
     stub = modelserver_pb2_grpc.ModelServerStub(channel)
